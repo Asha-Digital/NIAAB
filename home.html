@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Joint FOSA Account Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 800px;
+            margin-left: auto;
+            margin-right: auto;
+            height: 400px;
+            max-height: 50vh;
+        }
+        .nav-link {
+            transition: all 0.2s ease-in-out;
+        }
+        .nav-link.active {
+            border-bottom-color: #0d9488;
+            color: #0d9488;
+            font-weight: 600;
+        }
+        .card {
+            background-color: white;
+            border-radius: 0.75rem;
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+            padding: 1.5rem;
+            transition: transform 0.2s ease-in-out;
+        }
+        .card:hover {
+            transform: translateY(-4px);
+        }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800">
+   
+    <header class="bg-white/80 backdrop-blur-lg sticky top-0 z-10 shadow-sm">
+        <nav class="container mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16">
+                <h1 class="text-xl font-bold text-slate-900">Joint FOSA Account</h1>
+                <div class="hidden sm:flex items-center space-x-8">
+                    <a href="#dashboard" class="nav-link text-slate-600 hover:text-teal-600 border-b-2 border-transparent pb-1">Dashboard</a>
+                    <a href="#transactions" class="nav-link text-slate-600 hover:text-teal-600 border-b-2 border-transparent pb-1">Transactions</a>
+                    <a href="#loans" class="nav-link text-slate-600 hover:text-teal-600 border-b-2 border-transparent pb-1">Loans</a>
+                </div>
+            </div>
+        </nav>
+    </header>
+
+    <main class="container mx-auto p-4 sm:p-6 lg:p-8">
+        <div id="auth-status" class="card mb-8 p-4 text-center text-sm text-slate-500">
+            Authenticating user...
+        </div>
+
+        <section id="dashboard" class="scroll-mt-20">
+            <div class="mb-8">
+                <h2 class="text-3xl font-bold text-slate-900 mb-2">Financial Dashboard</h2>
+                <p class="text-slate-600">A real-time overview of your joint savings project. This section provides key financial metrics and visualizes your daily contribution progress.</p>
+            </div>
+           
+            <div class="grid grid-cols-1 md:grid-cols-5 gap-6 mb-8">
+                <div class="card">
+                    <h3 class="text-slate-500 font-medium mb-2">Total Savings</h3>
+                    <p id="totalSavings" class="text-4xl font-bold text-teal-600">KSH 0</p>
+                </div>
+                <div class="card">
+                    <h3 class="text-slate-500 font-medium mb-2">Loans Outstanding</h3>
+                    <p id="loansOutstanding" class="text-4xl font-bold text-amber-600">KSH 0</p>
+                </div>
+                <div class="card">
+                    <h3 class="text-slate-500 font-medium mb-2">Net Worth</h3>
+                    <p id="netWorth" class="text-4xl font-bold text-blue-600">KSH 0</p>
+                </div>
+                <div class="card">
+                    <h3 class="text-slate-500 font-medium mb-2">Ismail Mohamed's Total</h3>
+                    <p id="ismailTotal" class="text-2xl font-bold text-teal-700">KSH 0</p>
+                </div>
+                <div class="card">
+                    <h3 class="text-slate-500 font-medium mb-2">Paul Kanja's Total</h3>
+                    <p id="paulTotal" class="text-2xl font-bold text-blue-700">KSH 0</p>
+                </div>
+            </div>
+
+            <div class="card">
+                <h3 class="text-xl font-semibold text-slate-900 mb-4">Daily Contribution Analysis</h3>
+                <div class="chart-container">
+                    <canvas id="contributionChart"></canvas>
+                </div>
+            </div>
+        </section>
+
+        <hr class="my-12 border-slate-200">
+
+        <section id="transactions" class="scroll-mt-20">
+            <div class="mb-8">
+                <h2 class="text-3xl font-bold text-slate-900 mb-2">Manage Transactions</h2>
+                <p class="text-slate-600">Log your daily contributions here. Each entry updates the dashboard and transaction history automatically.</p>
+            </div>
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                <div class="lg:col-span-1">
+                    <div class="card p-6">
+                        <h3 class="text-xl font-semibold text-slate-900 mb-4">Add New Contribution</h3>
+                        <form id="transactionForm" class="space-y-4">
+                            <div>
+                                <label for="member" class="block text-sm font-medium text-slate-700">Member</label>
+                                <select id="member" name="member" class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-slate-300 focus:outline-none focus:ring-teal-500 focus:border-teal-500 sm:text-sm rounded-md">
+                                    <option>Ismail Mohamed</option>
+                                    <option>Paul Kanja</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label for="amount" class="block text-sm font-medium text-slate-700">Amount (KSH)</label>
+                                <input type="number" name="amount" id="amount" value="500" class="mt-1 focus:ring-teal-500 focus:border-teal-500 block w-full shadow-sm sm:text-sm border-slate-300 rounded-md">
+                            </div>
+                            <div>
+                                <label for="comment" class="block text-sm font-medium text-slate-700">Comment</label>
+                                <textarea name="comment" id="comment" rows="3" class="mt-1 focus:ring-teal-500 focus:border-teal-500 block w-full shadow-sm sm:text-sm border-slate-300 rounded-md"></textarea>
+                            </div>
+                            <button type="submit" class="w-full bg-teal-600 text-white font-semibold py-2 px-4 rounded-md hover:bg-teal-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-teal-500 transition">Add Contribution</button>
+                        </form>
+                    </div>
+                </div>
+                <div class="lg:col-span-2">
+                    <div class="card p-0">
+                        <div class="p-6 border-b border-slate-200">
+                           <h3 class="text-xl font-semibold text-slate-900">Transaction History</h3>
+                        </div>
+                        <div class="overflow-x-auto">
+                            <table class="min-w-full divide-y divide-slate-200">
+                                <thead class="bg-slate-50">
+                                    <tr>
+                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Date</th>
+                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Member</th>
+                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Amount</th>
+                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Comment</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="transactionHistory" class="bg-white divide-y divide-slate-200">
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <hr class="my-12 border-slate-200">
+
+        <section id="loans" class="scroll-mt-20">
+            <div class="mb-8">
+                <h2 class="text-3xl font-bold text-slate-900 mb-2">Loan Management</h2>
+                <p class="text-slate-600">Track loans taken from or repaid to the joint fund. This ensures transparency and accurate accounting of the group's net worth.</p>
+            </div>
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                <div class="lg:col-span-1">
+                    <div class="card p-6">
+                        <h3 class="text-xl font-semibold text-slate-900 mb-4">New Loan Action</h3>
+                        <form id="loanForm" class="space-y-4">
+                            <div>
+                                <label for="loanMember" class="block text-sm font-medium text-slate-700">Member</label>
+                                <select id="loanMember" name="loanMember" class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-slate-300 focus:outline-none focus:ring-teal-500 focus:border-teal-500 sm:text-sm rounded-md">
+                                    <option>Ismail Mohamed</option>
+                                    <option>Paul Kanja</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label for="loanType" class="block text-sm font-medium text-slate-700">Action Type</label>
+                                <select id="loanType" name="loanType" class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-slate-300 focus:outline-none focus:ring-teal-500 focus:border-teal-500 sm:text-sm rounded-md">
+                                    <option value="take">Take Loan</option>
+                                    <option value="repay">Repay Loan</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label for="loanAmount" class="block text-sm font-medium text-slate-700">Amount (KSH)</label>
+                                <input type="number" name="loanAmount" id="loanAmount" class="mt-1 focus:ring-teal-500 focus:border-teal-500 block w-full shadow-sm sm:text-sm border-slate-300 rounded-md">
+                            </div>
+                            <button type="submit" class="w-full bg-blue-600 text-white font-semibold py-2 px-4 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition">Process Loan</button>
+                        </form>
+                    </div>
+                </div>
+                <div class="lg:col-span-2">
+                    <div class="card p-0">
+                        <div class="p-6 border-b border-slate-200">
+                            <h3 class="text-xl font-semibold text-slate-900">Loan History</h3>
+                        </div>
+                        <div class="overflow-x-auto">
+                            <table class="min-w-full divide-y divide-slate-200">
+                                <thead class="bg-slate-50">
+                                    <tr>
+                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Date</th>
+                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Member</th>
+                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Type</th>
+                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Amount</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="loanHistory" class="bg-white divide-y divide-slate-200">
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+   
+    <footer class="bg-white mt-16 py-6">
+        <div class="container mx-auto text-center text-slate-500">
+            <p>&copy; 2025 Ismail Mohamed & Paul Kanja | Joint Savings Project</p>
+        </div>
+    </footer>
+
+    <!-- Firebase SDK Scripts -->
+    <script type="module">
+        // --- REMOVE FIREBASE FOR DEMO, USE HARDCODED DATA ---
+        // import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        // import { getAuth, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        // import { getFirestore, doc, addDoc, onSnapshot, collection, query, orderBy } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // UI elements
+        const totalSavingsEl = document.getElementById('totalSavings');
+        const loansOutstandingEl = document.getElementById('loansOutstanding');
+        const netWorthEl = document.getElementById('netWorth');
+        const transactionHistoryEl = document.getElementById('transactionHistory');
+        const loanHistoryEl = document.getElementById('loanHistory');
+        const ismailTotalEl = document.getElementById('ismailTotal');
+        const paulTotalEl = document.getElementById('paulTotal');
+
+        let contributionChart;
+        // --- HARDCODED TRANSACTIONS AS REQUESTED ---
+        let transactions = [
+            { date: "2025-08-08", member: "Ismail Mohamed", amount: 2000, comment: "" },
+            { date: "2025-08-08", member: "Paul Kanja", amount: 500, comment: "" },
+            { date: "2025-08-09", member: "Paul Kanja", amount: 500, comment: "" },
+            { date: "2025-08-10", member: "Ismail Mohamed", amount: 1000, comment: "" },
+            { date: "2025-08-10", member: "Paul Kanja", amount: 500, comment: "" }
+        ];
+        let loans = [];
+
+        function formatDate(dateStr) {
+            const options = { year: 'numeric', month: 'short', day: 'numeric' };
+            return new Date(dateStr + 'T00:00:00').toLocaleDateString('en-US', options);
+        }
+
+        function renderDashboard() {
+            const totalContributions = transactions.reduce((sum, t) => sum + t.amount, 0);
+            const totalLoansTaken = loans.filter(l => l.type === 'take').reduce((sum, l) => sum + l.amount, 0);
+            const totalLoansRepaid = loans.filter(l => l.type === 'repay').reduce((sum, l) => sum + l.amount, 0);
+
+            const outstanding = totalLoansTaken - totalLoansRepaid;
+            const netWorth = totalContributions - outstanding;
+
+            // Calculate totals for each member
+            const ismailTotal = transactions.filter(t => t.member === 'Ismail Mohamed').reduce((sum, t) => sum + t.amount, 0);
+            const paulTotal = transactions.filter(t => t.member === 'Paul Kanja').reduce((sum, t) => sum + t.amount, 0);
+
+            totalSavingsEl.textContent = `KSH ${totalContributions.toLocaleString()}`;
+            loansOutstandingEl.textContent = `KSH ${outstanding.toLocaleString()}`;
+            netWorthEl.textContent = `KSH ${netWorth.toLocaleString()}`;
+            ismailTotalEl.textContent = `KSH ${ismailTotal.toLocaleString()}`;
+            paulTotalEl.textContent = `KSH ${paulTotal.toLocaleString()}`;
+        }
+
+        function renderTransactionHistory() {
+            transactionHistoryEl.innerHTML = '';
+            if (transactions.length === 0) {
+                transactionHistoryEl.innerHTML = `<tr><td colspan="4" class="text-center py-10 text-slate-500">No transactions yet.</td></tr>`;
+                return;
+            }
+            transactions.sort((a, b) => new Date(b.date) - new Date(a.date)).forEach(t => {
+                const row = `
+                    <tr>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-500">${formatDate(t.date)}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-slate-900">${t.member}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-500">KSH ${t.amount.toLocaleString()}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-500">${t.comment}</td>
+                    </tr>
+                `;
+                transactionHistoryEl.innerHTML += row;
+            });
+        }
+
+        function renderLoanHistory() {
+            loanHistoryEl.innerHTML = '';
+            if (loans.length === 0) {
+                loanHistoryEl.innerHTML = `<tr><td colspan="4" class="text-center py-10 text-slate-500">No loan history.</td></tr>`;
+                return;
+            }
+            loans.sort((a, b) => new Date(b.date) - new Date(a.date)).forEach(l => {
+                const typeClass = l.type === 'take' ? 'text-red-500' : 'text-green-500';
+                const row = `
+                    <tr>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-500">${formatDate(l.date)}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-slate-900">${l.member}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm font-semibold ${typeClass}">${l.type === 'take' ? 'Taken' : 'Repaid'}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-500">KSH ${l.amount.toLocaleString()}</td>
+                    </tr>
+                `;
+                loanHistoryEl.innerHTML += row;
+            });
+        }
+
+        function renderChart() {
+            const ctx = document.getElementById('contributionChart').getContext('2d');
+            const groupedByDate = transactions.reduce((acc, t) => {
+                acc[t.date] = acc[t.date] || { ismail: 0, paul: 0, total: 0 };
+                if (t.member === 'Ismail Mohamed') acc[t.date].ismail += t.amount;
+                if (t.member === 'Paul Kanja') acc[t.date].paul += t.amount;
+                acc[t.date].total += t.amount;
+                return acc;
+            }, {});
+
+            const sortedDates = Object.keys(groupedByDate).sort((a, b) => new Date(a) - new Date(b));
+            const labels = sortedDates.map(date => formatDate(date));
+            const ismailData = sortedDates.map(date => groupedByDate[date].ismail);
+            const paulData = sortedDates.map(date => groupedByDate[date].paul);
+            const totalData = sortedDates.map(date => groupedByDate[date].total);
+
+            if (contributionChart) {
+                contributionChart.destroy();
+            }
+
+            contributionChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [
+                        {
+                            label: 'Ismail Mohamed',
+                            data: ismailData,
+                            backgroundColor: 'rgba(13, 148, 136, 0.7)', // teal-600
+                            borderColor: 'rgba(13, 148, 136, 1)',
+                            borderWidth: 1
+                        },
+                        {
+                            label: 'Paul Kanja',
+                            data: paulData,
+                            backgroundColor: 'rgba(59, 130, 246, 0.7)', // blue-500
+                            borderColor: 'rgba(59, 130, 246, 1)',
+                            borderWidth: 1
+                        },
+                        {
+                            label: 'Daily Total',
+                            data: totalData,
+                            backgroundColor: 'rgba(107, 114, 128, 0.5)', // gray-500
+                            borderColor: 'rgba(107, 114, 128, 1)',
+                            borderWidth: 1,
+                            type: 'line',
+                            fill: false,
+                            tension: 0.2
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                callback: function(value) {
+                                    return 'KSH ' + value.toLocaleString();
+                                }
+                            }
+                        }
+                    },
+                    plugins: {
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    let label = context.dataset.label || '';
+                                    if (label) {
+                                        label += ': ';
+                                    }
+                                    if (context.parsed.y !== null) {
+                                        label += 'KSH ' + context.parsed.y.toLocaleString();
+                                    }
+                                    return label;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Render on page load
+        document.addEventListener('DOMContentLoaded', () => {
+            renderDashboard();
+            renderTransactionHistory();
+            renderLoanHistory();
+            renderChart();
+        });
+    </script>
+</body>
+</html>
